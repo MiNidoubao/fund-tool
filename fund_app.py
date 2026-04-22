@@ -102,3 +102,82 @@ if st.button("开始分析"):
 
 st.markdown("---")
 st.caption("功能：净值/均线/收益率/最大回撤/趋势/定投建议/自动记录")
+# ==========================
+# 追加新功能（不动原有代码）
+# ==========================
+
+if code:
+    try:
+        # 1. 获取基金基本信息
+        fund_info = ak.fund_info_em(symbol=code)
+        st.subheader("📊 基金基本信息")
+        st.dataframe(fund_info, use_container_width=True)
+
+        # 2. 获取基金经理信息
+        manager_info = ak.fund_manager_em(symbol=code)
+        st.subheader("👔 基金经理")
+        st.dataframe(manager_info, use_container_width=True)
+
+        # 3. 获取基金持仓（重仓股）
+        fund_position = ak.fund_portfolio_hold_em(symbol=code)
+        st.subheader("📦 最新持仓（重仓股）")
+        st.dataframe(fund_position, use_container_width=True)
+
+        # 4. 定投回测功能（你最想要的）
+        st.subheader("🧮 定投回测计算器")
+        col1, col2 = st.columns(2)
+        with col1:
+            start_date = st.date_input("开始日期", value=pd.to_datetime("2023-01-01"))
+        with col2:
+            end_date = st.date_input("结束日期", value=pd.to_datetime("today"))
+
+        invest_amount = st.number_input("每次定投金额（元）", value=100, step=100)
+        cycle_type = st.selectbox("定投周期", ["每周", "每月"])
+
+        if st.button("开始计算定投收益"):
+            # 获取历史净值
+            nav_df = ak.fund_open_fund_info_em(symbol=code, indicator="单位净值走势")
+            nav_df['净值日期'] = pd.to_datetime(nav_df['净值日期'])
+            nav_df = nav_df[(nav_df['净值日期'] >= pd.to_datetime(start_date)) & 
+                            (nav_df['净值日期'] <= pd.to_datetime(end_date))]
+
+            # 定投回测逻辑
+            if cycle_type == "每周":
+                invest_dates = pd.date_range(start=start_date, end=end_date, freq="W-FRI")
+            else:
+                invest_dates = pd.date_range(start=start_date, end=end_date, freq="M")
+
+            invest_records = []
+            total_invest = 0
+            total_shares = 0
+
+            for d in invest_dates:
+                mask = nav_df['净值日期'] <= d
+                if mask.any():
+                    price = nav_df.loc[mask.idxmax(), '单位净值']
+                    shares = invest_amount / price
+                    total_shares += shares
+                    total_invest += invest_amount
+                    invest_records.append({
+                        "日期": d,
+                        "净值": price,
+                        "投入": invest_amount,
+                        "累计投入": total_invest,
+                        "持有份额": total_shares
+                    })
+
+            # 最终资产
+            if len(nav_df) > 0:
+                final_nav = nav_df['单位净值'].iloc[-1]
+                final_value = total_shares * final_nav
+                profit = final_value - total_invest
+                profit_rate = profit / total_invest * 100 if total_invest > 0 else 0
+
+                st.success(f"✅ 回测完成")
+                st.write(f"累计投入：**{total_invest:.2f} 元**")
+                st.write(f"最终资产：**{final_value:.2f} 元**")
+                st.write(f"总收益：**{profit:.2f} 元**")
+                st.write(f"收益率：**{profit_rate:.2f}%**")
+
+    except Exception as e:
+        st.error(f"无法获取数据：{str(e)}")
