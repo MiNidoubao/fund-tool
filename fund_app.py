@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 
 st.set_page_config(page_title="基金定投分析", layout="wide")
-st.title("📈 红利低波 定投分析工具（完整版）")
+st.title("📈 基金分析工具 ")
 
 # 输入基金代码
 symbol = st.text_input("基金代码", value="012460")
