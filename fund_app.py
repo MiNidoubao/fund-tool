@@ -22,7 +22,10 @@ if st.button("开始分析"):
         # 计算均线
         df['MA20'] = df['单位净值'].rolling(20).mean()
         df['MA60'] = df['单位净值'].rolling(60).mean()
- # 注意：要和上面的代码保持同样的缩进（4个空格）
+
+        # ==========================
+        # 新增功能（已对齐缩进）
+        # ==========================
 
         # 1. 获取基金基本信息
         fund_info = ak.fund_info_em(symbol=symbol)
@@ -58,18 +61,18 @@ if st.button("开始分析"):
                             (nav_df['净值日期'] <= pd.to_datetime(end_date))]
 
             # 定投回测逻辑
-        if cycle_type == "每周":
+            if cycle_type == "每周":
                 invest_dates = pd.date_range(start=start_date, end=end_date, freq="W-FRI")
-        else:
+            else:
                 invest_dates = pd.date_range(start=start_date, end=end_date, freq="M")
 
             invest_records = []
             total_invest = 0
             total_shares = 0
 
-        for d in invest_dates:
+            for d in invest_dates:
                 mask = nav_df['净值日期'] <= d
-        if mask.any():
+                if mask.any():
                     price = nav_df.loc[mask.idxmax(), '单位净值']
                     shares = invest_amount / price
                     total_shares += shares
@@ -82,8 +85,8 @@ if st.button("开始分析"):
                         "持有份额": total_shares
                     })
 
-           
-        if len(nav_df) > 0:
+            # 最终资产
+            if len(nav_df) > 0:
                 final_nav = nav_df['单位净值'].iloc[-1]
                 final_value = total_shares * final_nav
                 profit = final_value - total_invest
@@ -93,7 +96,11 @@ if st.button("开始分析"):
                 st.write(f"累计投入：**{total_invest:.2f} 元**")
                 st.write(f"最终资产：**{final_value:.2f} 元**")
                 st.write(f"总收益：**{profit:.2f} 元**")
-                st.write(f"收益率：**{profit_rate:.2f}%**")     
+                st.write(f"收益率：**{profit_rate:.2f}%**")    
+
+        # ==========================
+        # 原来的核心逻辑（已对齐）
+        # ==========================
         last_price = df['单位净值'].iloc[-1]
         ma20 = df['MA20'].iloc[-1]
         ma60 = df['MA60'].iloc[-1]
@@ -101,9 +108,7 @@ if st.button("开始分析"):
         # 计算偏离60日均线幅度
         ma60_deviation = (last_price - ma60) / ma60 * 100
 
-        # ======================
-        # 新增：计算最大回撤
-        # ======================
+        # 最大回撤
         df['累计新高'] = df['单位净值'].cummax()
         df['回撤'] = (df['单位净值'] - df['累计新高']) / df['累计新高'] * 100
         max_drawdown = df['回撤'].min()
@@ -173,6 +178,3 @@ if st.button("开始分析"):
 
 st.markdown("---")
 st.caption("功能：净值/均线/收益率/最大回撤/趋势/定投建议/自动记录")
-# ==========================
-
-        st.error(f"无法获取数据：{str(e)}")
