@@ -24,25 +24,33 @@ if st.button("开始分析"):
         df['MA60'] = df['单位净值'].rolling(60).mean()
 
         # ==========================
-        # 新增功能（已对齐缩进）
+        # 修复：用兼容的函数获取基金基本信息
         # ==========================
+        try:
+            # 获取基金基础信息（兼容版）
+            fund_basic = ak.fund_etf_category_sina(symbol=symbol)
+            st.subheader("📊 基金基本信息")
+            st.dataframe(fund_basic, use_container_width=True)
+        except:
+            st.warning("⚠️ 无法获取基金基本信息，跳过")
 
-        # 1. 获取基金基本信息
-        fund_info = ak.fund_info_em(symbol=symbol)
-        st.subheader("📊 基金基本信息")
-        st.dataframe(fund_info, use_container_width=True)
+        # 1. 获取基金经理信息
+        try:
+            manager_info = ak.fund_manager_em(symbol=symbol)
+            st.subheader("👔 基金经理")
+            st.dataframe(manager_info, use_container_width=True)
+        except:
+            st.warning("⚠️ 无法获取基金经理信息，跳过")
 
-        # 2. 获取基金经理信息
-        manager_info = ak.fund_manager_em(symbol=symbol)
-        st.subheader("👔 基金经理")
-        st.dataframe(manager_info, use_container_width=True)
+        # 2. 获取基金持仓（重仓股）
+        try:
+            fund_position = ak.fund_portfolio_hold_em(symbol=symbol)
+            st.subheader("📦 最新持仓（重仓股）")
+            st.dataframe(fund_position, use_container_width=True)
+        except:
+            st.warning("⚠️ 无法获取持仓数据，跳过")
 
-        # 3. 获取基金持仓（重仓股）
-        fund_position = ak.fund_portfolio_hold_em(symbol=symbol)
-        st.subheader("📦 最新持仓（重仓股）")
-        st.dataframe(fund_position, use_container_width=True)
-
-        # 4. 定投回测计算器
+        # 3. 定投回测计算器
         st.subheader("🧮 定投回测计算器")
         col1, col2 = st.columns(2)
         with col1:
